@@ -82,76 +82,31 @@ function removeSubscriber_(email) {
 
 /** ===================== WEB APP ENDPOINTS ===================== */
 function doGet(e) {
-  // Обработка на unsubscribe линк от имейла
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type'
+  };
+  
   if (e.parameter.action === 'unsubscribe') {
     const email = e.parameter.email || '';
     if (email) {
       const result = removeSubscriber_(email);
       Logger.log('Отписване: ' + email + ' → ' + result.success);
-      return HtmlService.createHtmlOutput(`
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>Отписване</title>
-            <style>
-              body { font-family: Arial, sans-serif; text-align: center; padding: 40px; background: #f5f5f5; }
-              .container { max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; }
-              .success { color: #4CAF50; font-size: 18px; }
-              .error { color: #f44336; font-size: 18px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <h1 class="${result.success ? 'success' : 'error'}">
-                ${result.success ? '✅ Успешно отписване!' : '❌ Грешка'}
-              </h1>
-              <p>${result.message}</p>
-              <p style="color: #666; font-size: 14px;">Няма да получавате повече имейли.</p>
-            </div>
-          </body>
-        </html>
-      `);
     }
-  }
-
-  // Обработка на subscribe (GET)
-  if (e.parameter.action === 'subscribe') {
-    const email = e.parameter.email || '';
-    const name = e.parameter.name || '';
-    if (email) {
-      const result = addSubscriber_(email, name);
-      Logger.log('Абониране: ' + email + ' → ' + result.success);
-      return HtmlService.createHtmlOutput(`
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>Абониране</title>
-            <style>
-              body { font-family: Arial, sans-serif; text-align: center; padding: 40px; background: #f5f5f5; }
-              .container { max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; }
-              .success { color: #4CAF50; font-size: 18px; }
-              .error { color: #f44336; font-size: 18px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <h1 class="${result.success ? 'success' : 'error'}">
-                ${result.success ? '✅ Успешно абониране!' : '⚠️ Внимание'}
-              </h1>
-              <p>${result.message}</p>
-            </div>
-          </body>
-        </html>
-      `);
-    }
+    return HtmlService.createHtmlOutput('<p>✅ Успешно отписване! Няма да получавате повече имейли.</p>').addMetaTag('viewport', 'width=device-width, initial-scale=1');
   }
   
   return HtmlService.createHtmlOutput('<p>Bible Verse Bot API is running</p>').addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
 function doPost(e) {
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type'
+  };
+  
   try {
     const data = JSON.parse(e.postData.contents);
     let result = { success: false, message: 'Unknown action' };
@@ -162,17 +117,18 @@ function doPost(e) {
       result = removeSubscriber_(data.email);
     }
     
-    // Върни JSON с правилни headers
     return ContentService.createTextOutput(JSON.stringify(result))
-      .setMimeType(ContentService.MimeType.JSON);
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeader('Access-Control-Allow-Origin', '*')
+      .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+      .setHeader('Access-Control-Allow-Headers', 'Content-Type');
   } catch (error) {
     return ContentService.createTextOutput(JSON.stringify({ success: false, message: error.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeader('Access-Control-Allow-Origin', '*')
+      .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+      .setHeader('Access-Control-Allow-Headers', 'Content-Type');
   }
-}
-
-function doOptions(e) {
-  return HtmlService.createHtmlOutput('');
 }
 
 /** ===================== GOOGLE SHEETS ===================== */
@@ -222,7 +178,6 @@ function getRecentVerses_(days) {
   cutoffDate.setDate(cutoffDate.getDate() - days);
   const data = sh.getRange(2, 1, lastRow - 1, 5).getValues();
   const recentVerses = [];
-  // Обърни масива, за да вземеш последните редове първо
   for (let i = data.length - 1; i >= 0; i--) {
     const row = data[i];
     const timestamp = new Date(row[0]);
@@ -230,7 +185,7 @@ function getRecentVerses_(days) {
       const ref = `${row[2]} ${row[3]}:${row[4]}`;
       recentVerses.push(ref.toLowerCase());
     } else {
-      break; // Прекрати още при първия стар запис
+      break;
     }
   }
   return recentVerses;
@@ -412,40 +367,23 @@ function chooseBibleVerseFromNews_() {
 }
 
 /** ===================== HTML ИМЕЙЛ ===================== */
-function renderReportHtml_(verse, email) {
+function renderReportHtml_(verse) {
   const style = `<style>body{font-family:Arial,sans-serif;line-height:1.6;color:#222;margin:0;padding:0}.wrap{max-width:640px;margin:40px auto;border:1px solid #eee;padding:24px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,0.06);background-color:#fff}h2{margin:0 0 12px;text-align:center;color:#1a73e8}.text{font-style:italic;font-size:18px;margin:0 0 10px;text-align:center;line-height:1.8}.ref{margin-top:8px;font-size:14px;color:#666;text-align:center}a.ref-link{color:#1a73e8;text-decoration:none}a.ref-link:hover{text-decoration:underline}.note{text-align:center;font-size:12px;color:#888;margin-top:12px}.unsubscribe{text-align:center;font-size:11px;color:#999;margin-top:20px;border-top:1px solid #eee;padding-top:15px}.unsubscribe a{color:#999;text-decoration:underline}</style>`;
   const v = verse || { text:'(няма стих)', ref:'', url:'' };
   const refHtml = v.url ? `<a class="ref-link" href="${v.url}" target="_blank" rel="noopener">— ${v.ref}</a>` : `— ${v.ref}`;
-  const unsubscribeUrl = email ? `https://script.google.com/macros/d/YOUR_DEPLOYMENT_ID/usercallback?action=unsubscribe&email=${encodeURIComponent(email)}` : `https://script.google.com/macros/d/YOUR_DEPLOYMENT_ID/usercallback?action=unsubscribe`;
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta http-equiv="Content-Type" content="text/html; charset=utf-8">${style}</head><body><div class="wrap"><h2>Стих за деня</h2><p class="text">"${v.text}"</p><p class="ref">${refHtml}</p><div class="note">Избран на база топ ${CFG.newsCount} новини от България.</div><div class="unsubscribe">Не искаш повече да получаваш тези имейли? <a href="${unsubscribeUrl}" target="_blank">Отпиши се тук</a></div></div></body></html>`;
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta http-equiv="Content-Type" content="text/html; charset=utf-8">${style}</head><body><div class="wrap"><h2>Стих за деня</h2><p class="text">"${v.text}"</p><p class="ref">${refHtml}</p><div class="note">Избран на база топ ${CFG.newsCount} новини от България.</div><div class="unsubscribe">Не искаш повече да получаваш тези имейли? <a href="https://script.google.com/macros/d/YOUR_DEPLOYMENT_ID/usercallback?action=unsubscribe" target="_blank">Отпиши се тук</a></div></div></body></html>`;
 }
 
 function sendReportEmail_(verse) {
-  const subscribers = getActiveSubscribers_();
-  if (subscribers.length === 0) {
+  const to = getMailTo_();
+  if (!to) {
     Logger.log('⚠️ Няма активни subscribers.');
     return;
   }
-  
   const subject = 'Стих за деня';
-  const fromName = getFromName_();
-  let successCount = 0;
-  let failCount = 0;
-  
-  for (const email of subscribers) {
-    try {
-      // Генерирай персонализиран HTML с email параметър
-      const html = renderReportHtml_(verse, email);
-      GmailApp.sendEmail(email, subject, '(виж HTML съдържанието)', { name: fromName, htmlBody: html });
-      successCount++;
-      Logger.log('✅ Имейл изпратен до: ' + email);
-    } catch (error) {
-      failCount++;
-      Logger.log('❌ Грешка при изпращане до ' + email + ': ' + error.toString());
-    }
-  }
-  
-  Logger.log(`📧 Резултат: ${successCount} успешно, ${failCount} неуспешно`);
+  const html = renderReportHtml_(verse);
+  GmailApp.sendEmail(to, subject, '(виж HTML съдържанието)', { name: getFromName_(), htmlBody: html });
+  Logger.log('✅ Имейл изпратен до: ' + to);
 }
 
 /** ===================== ГЛАВНА ФУНКЦИЯ ===================== */
