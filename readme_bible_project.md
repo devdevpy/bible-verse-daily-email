@@ -9,24 +9,28 @@
 2. 🤖 Използва AI (GPT-4o-mini) да избере подходящ библейски стих според контекста на новините
 3. 📧 Изпраща стиха по имейл в красив HTML формат
 4. 📊 Записва всичко в Google Sheets за история
+5. 👥 Поддържа subscriber система за публични абонаменти
 
 ## ✨ Характеристики
 
 - ✅ Автоматично ежедневно изпращане
 - ✅ Интелигентен избор на стих според актуалните новини
 - ✅ Стихове от цялата Библия (66 книги)
-- ✅ Оригинален текст на английски (KJV)
+- ✅ Български текст от wordproject.org
 - ✅ Българска референция + линк към BG1940 превод
 - ✅ История на изпратените стихове в Google Sheets
 - ✅ Красив HTML имейл дизайн
+- ✅ Публична абонамент форма
+- ✅ Subscriber management система
 
 ## 🛠️ Технологии
 
 - **Google Apps Script** - автоматизация
 - **OpenRouter API** - AI модел (GPT-4o-mini)
-- **Google Sheets** - база данни за история
+- **Google Sheets** - база данни за история и subscribers
 - **Gmail API** - изпращане на имейли
 - **Google News RSS** - извличане на новини
+- **wordproject.org** - български библейски текстове
 
 ## 📋 Предварителни изисквания
 
@@ -40,7 +44,7 @@
 ### Стъпка 1: Създай Google Sheets таблица
 
 1. Отвори [Google Sheets](https://sheets.google.com)
-2. Създай нова таблица
+2. Създай нова таблица (напр. "Bible Verses")
 3. Отвори **Extensions** → **Apps Script**
 
 ### Стъпка 2: Добави кода
@@ -57,10 +61,26 @@
 | Key | Value | Описание |
 |-----|-------|----------|
 | `OPENROUTER_API_KEY` | `sk-or-v1-xxxxx` | Твоят OpenRouter API ключ |
-| `MAIL_TO` | `your@email.com` | Имейл адрес за получаване на стиховете |
+| `MAIL_TO` | `your@email.com` | Fallback имейл (опционално, ако нямаш subscribers) |
 | `MAIL_FROM_NAME` | `Bible Verse Bot` | Име на изпращача (по избор) |
 
-### Стъпка 4: Разреши достъпи
+### Стъпка 4: Deploy Web App (за subscriber форма)
+
+1. Кликни **Deploy** → **New deployment**
+2. Избери тип: **Web app**
+3. Настройки:
+   - **Execute as**: Me
+   - **Who has access**: Anyone
+4. Кликни **Deploy**
+5. **Копирай URL-а** (ще ти трябва за index.html)
+
+### Стъпка 5: Публикувай абонамент формата
+
+1. Редактирай `index.html`
+2. Замени `const SCRIPT_URL = '...'` с твоя Web App URL
+3. Качи `index.html` в GitHub Pages или Netlify
+
+### Стъпка 6: Разреши достъпи
 
 1. Изпълни функцията `testSendVerse()` (Play бутон ▶️)
 2. Разреши достъп до:
@@ -68,7 +88,7 @@
    - Gmail
    - External API calls
 
-### Стъпка 5: Настрой автоматизация
+### Стъпка 7: Настрой автоматизация
 
 1. Изпълни функцията `setupDailyTrigger()`
 2. Това ще настрои автоматично изпращане всеки ден в 9:00
@@ -78,6 +98,7 @@
 ```
 bible-verse-daily-email/
 ├── Code.gs                 # Основен код на проекта
+├── index.html             # Публична абонамент форма
 ├── README.md              # Документация (този файл)
 ├── LICENSE                # MIT лиценз
 └── .gitignore            # Git ignore файл
@@ -89,34 +110,50 @@ bible-verse-daily-email/
 
 ```javascript
 const CFG = {
-  versesSheetName: 'Verses',  // Име на листа в таблицата
-  newsCount: 10,              // Брой новини за анализ (1-20)
-  dailyHour: 9,               // Час за изпращане (0-23)
+  versesSheetName: 'Verses',      // Име на листа за стихове
+  subscribersSheetName: 'Subscribers', // Име на листа за subscribers
+  newsCount: 10,                  // Брой новини за анализ (1-20)
+  dailyHour: 9,                   // Час за изпращане (0-23)
 };
 ```
 
 ## 📊 Google Sheets структура
 
-Листът **Verses** съдържа следните колони:
+### Лист "Verses" - История на изпратените стихове
 
 | Колона | Описание |
 |--------|----------|
 | `timestamp` | Дата и час на изпращане |
-| `version` | Версия на библията (en-kjv) |
-| `book` | Книга (на английски) |
+| `version` | Версия на библията (bg) |
+| `book` | Книга (на български) |
 | `chapter` | Глава |
 | `verse` | Стих |
-| `text` | Текст на стиха (английски) |
+| `text` | Текст на стиха (български) |
 | `ref` | Референция (български) |
-| `sent_to` | Имейл получател |
+| `sent_to` | Имейл получатели |
 | `link` | Линк към BG1940 превод |
 | `news_summary` | Резюме на новините |
+
+### Лист "Subscribers" - Управление на абонати
+
+| Колона | Описание |
+|--------|----------|
+| `timestamp` | Дата на абониране |
+| `email` | Имейл адрес |
+| `name` | Име (опционално) |
+| `status` | active / unsubscribed |
+| `unsubscribed_at` | Дата на отписване |
 
 ## 🧪 Тестване
 
 ### Тест на цялата система
 ```javascript
 testSendVerse()
+```
+
+### Тест на subscriber системата
+```javascript
+testSubscription()
 ```
 
 ### Проверка на тригера
@@ -132,27 +169,32 @@ setupDailyTrigger()
 
 ```
 ┌─────────────────────────────────────┐
-│     📖 Стих за деня                 │
+│     Стих за деня                    │
 ├─────────────────────────────────────┤
 │                                     │
-│  "For God so loved the world,       │
-│   that he gave his only begotten    │
-│   Son, that whosoever believeth      │
-│   in him should not perish, but     │
-│   have everlasting life."           │
+│  "И Господ ще бъде прибежище на     │
+│   угнетените, Прибежище в скръбни   │
+│   времена."                         │
 │                                     │
-│      — Йоан 3:16 (BG1940)          │
+│      — Псалми 9:9                  │
 │                                     │
 │  Избран на база топ 10 новини      │
-│  от България. Линкът води към      │
-│  българския превод BG1940.         │
+│  от България.                       │
 └─────────────────────────────────────┘
 ```
+
+## 👥 Публична абонамент форма
+
+Хората могат да се абонират/отпишат през публичната HTML форма:
+- Красив responsive дизайн
+- Tabs за Subscribe / Unsubscribe
+- Real-time валидация
+- Success/Error съобщения
 
 ## 🔍 Troubleshooting
 
 ### Имейлът не се изпраща
-- Провери дали `MAIL_TO` е правилно настроен
+- Провери дали има активни subscribers в листа "Subscribers"
 - Провери Gmail квотата (100 имейла/ден за безплатен акаунт)
 - Виж логовете: View → Logs (Ctrl+Enter)
 
@@ -166,24 +208,32 @@ setupDailyTrigger()
 - Системата има fallback: "Няма налични новини днес"
 
 ### Повтарящи се стихове
-- ИИ понякога може да избере популярни стихове
-- Увеличи `temperature` от 0.7 на 0.9 за повече разнообразие
+- Системата проверява последните 30 дни автоматично
+- ИИ може да избере популярни стихове - temperature е настроен на 0.95
 - Провери дали новините се обновяват (в колона `news_summary`)
+
+### Subscriber формата не работи
+- Провери дали Web App е deploy-нат с "Anyone" access
+- Провери дали `SCRIPT_URL` в index.html е правилен
+- Отвори Developer Console в браузъра за грешки
 
 ## 🔒 Сигурност
 
 - ❌ **НИКОГА не качвай** `OPENROUTER_API_KEY` в GitHub
 - ✅ Ключовете са в Script Properties (не в кода)
 - ✅ Използвай `.gitignore` за локални конфигурации
+- ✅ Web App работи без да излага API ключове
 
 ## 💡 Бъдещи подобрения
 
+- [ ] Password защита на абонамент формата
+- [ ] Email verification при абониране
+- [ ] Whitelist система за ограничен достъп
 - [ ] Multi-language support (повече езици)
-- [ ] Избор на различни преводи на библията
-- [ ] Уеб интерфейс за настройки
+- [ ] Различни преводи на библията
 - [ ] SMS изпращане вместо имейл
 - [ ] Webhook интеграции (Slack, Discord, Telegram)
-- [ ] Анализ на sentiment на новините
+- [ ] Analytics dashboard
 
 ## 🤝 Принос
 
@@ -206,7 +256,7 @@ Contributions са добре дошли! Моля:
 ## 🙏 Благодарности
 
 - [OpenRouter](https://openrouter.ai/) - AI API platform
-- [Bible Gateway](https://www.biblegateway.com/) - Библейски текстове
+- [WordProject](https://www.wordproject.org/) - Български библейски текстове
 - [Google News](https://news.google.com/) - RSS новини
 - Всички contributors на проекта
 

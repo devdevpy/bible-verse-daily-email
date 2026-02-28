@@ -1,0 +1,38 @@
+# API Keys and Secrets
+.env
+*.key
+*.secret
+config.json
+
+# Google Apps Script
+.clasp.json
+.claspignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Node modules (if using clasp)
+node_modules/
+package-lock.json
+
+# Backup files
+*.bak
+*.backup
