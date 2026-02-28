@@ -82,23 +82,52 @@ function removeSubscriber_(email) {
 
 /** ===================== WEB APP ENDPOINTS ===================== */
 function doGet(e) {
-  return HtmlService.createHtmlOutput('Bible Verse Bot API is running');
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type'
+  };
+  
+  if (e.parameter.action === 'unsubscribe') {
+    const email = e.parameter.email || '';
+    if (email) {
+      const result = removeSubscriber_(email);
+      Logger.log('Отписване: ' + email + ' → ' + result.success);
+    }
+    return HtmlService.createHtmlOutput('<p>✅ Успешно отписване! Няма да получавате повече имейли.</p>').addMetaTag('viewport', 'width=device-width, initial-scale=1');
+  }
+  
+  return HtmlService.createHtmlOutput('<p>Bible Verse Bot API is running</p>').addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
 function doPost(e) {
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type'
+  };
+  
   try {
     const data = JSON.parse(e.postData.contents);
+    let result = { success: false, message: 'Unknown action' };
+    
     if (data.action === 'subscribe') {
-      const result = addSubscriber_(data.email, data.name || '');
-      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+      result = addSubscriber_(data.email, data.name || '');
+    } else if (data.action === 'unsubscribe') {
+      result = removeSubscriber_(data.email);
     }
-    if (data.action === 'unsubscribe') {
-      const result = removeSubscriber_(data.email);
-      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
-    }
-    return ContentService.createTextOutput(JSON.stringify({ success: false, message: 'Unknown action' })).setMimeType(ContentService.MimeType.JSON);
+    
+    return ContentService.createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeader('Access-Control-Allow-Origin', '*')
+      .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+      .setHeader('Access-Control-Allow-Headers', 'Content-Type');
   } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({ success: false, message: error.toString() })).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({ success: false, message: error.toString() }))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeader('Access-Control-Allow-Origin', '*')
+      .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+      .setHeader('Access-Control-Allow-Headers', 'Content-Type');
   }
 }
 
