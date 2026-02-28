@@ -207,8 +207,8 @@
     <p class="subtitle">Получавай ежедневна духовна инспирация директно във входящата си поща</p>
     
     <div class="tabs">
-      <div class="tab active" onclick="switchTab('subscribe')">Абонирай се</div>
-      <div class="tab" onclick="switchTab('unsubscribe')">Отпиши се</div>
+      <div class="tab active" onclick="switchTab(event, 'subscribe')">Абонирай се</div>
+      <div class="tab" onclick="switchTab(event, 'unsubscribe')">Отпиши се</div>
     </div>
     
     <!-- Subscribe Form -->
@@ -275,7 +275,7 @@
     // ВАЖНО: Замени с твоя Apps Script URL след deploy!
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEl7ECPb7nXARZtAdEIamRv9leFMpellOYzyfWiLUqvMf5Bf9xwXseJtPFN8ukNsSWqw/exec';
     
-    function switchTab(tab) {
+    function switchTab(event, tab) {
       // Update tabs
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       event.target.classList.add('active');
@@ -319,14 +319,17 @@
         
         if (result.success) {
           msg.className = 'message success';
+          msg.style.display = 'block';
           msg.textContent = '✅ Успешно се абонира! Проверете имейла си за потвърждение.';
           form.reset();
         } else {
           msg.className = 'message error';
+          msg.style.display = 'block';
           msg.textContent = '❌ ' + (result.message || 'Грешка при абониране.');
         }
       } catch (error) {
         msg.className = 'message error';
+        msg.style.display = 'block';
         msg.textContent = '❌ Грешка при свързване със сървъра.';
       } finally {
         btn.disabled = false;
@@ -361,14 +364,17 @@
         
         if (result.success) {
           msg.className = 'message success';
+          msg.style.display = 'block';
           msg.textContent = '✅ Успешно се отписа от абонамента.';
           form.reset();
         } else {
           msg.className = 'message error';
+          msg.style.display = 'block';
           msg.textContent = '❌ ' + (result.message || 'Грешка при отписване.');
         }
       } catch (error) {
         msg.className = 'message error';
+        msg.style.display = 'block';
         msg.textContent = '❌ Грешка при свързване със сървъра.';
       } finally {
         btn.disabled = false;
